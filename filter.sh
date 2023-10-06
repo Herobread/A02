@@ -6,4 +6,4 @@ then
   exit 1
 fi
 
-du -h $1/data/* |sed 's/\.\d*//g' |sed 's/K/000/g'| sort |head -n5
+du $1/data/* | sort -rn | head -n 5 | awk -F'/' '{print $NF}'
