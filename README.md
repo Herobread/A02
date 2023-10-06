@@ -3,5 +3,5 @@
 Example:
 
 ```bash
-fetch-data.sh directoryname baseurl
+./fetch-data.sh directoryname baseurl
 ```

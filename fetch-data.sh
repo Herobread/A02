@@ -4,7 +4,7 @@ set -e
 
 # check arguments
 if [ $# -ne 2 ]; then
-  echo "Error: expected 2 arguments" >&2
+  echo "Error: expected 2 arguments: directory and base url" >&2
   exit
 fi
 
