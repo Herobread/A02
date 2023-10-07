@@ -11,19 +11,19 @@ sp="/-\|"
 # Parse command line options
 while getopts ":t" opt; do
   case $opt in
-    t)
-      USE_TESTING_SET=true
-      echo "Using testing set."
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
+  t)
+    USE_TESTING_SET=true
+    echo "Using testing set."
+    ;;
+  \?)
+    echo "Invalid option: -$OPTARG" >&2
+    exit 1
+    ;;
   esac
 done
 
 # Shift command line options to access the directory argument
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 # Check if a directory argument is provided
 if [ $# -ne 1 ]; then
@@ -57,33 +57,32 @@ mkdir -p "$OUTPUT_DIR"
 echo "Output directory: $OUTPUT_DIR"
 
 # Create the CSV file with headers
-echo "route,duration" > "$OUTPUT_DIR/duration.csv"
+echo "route,duration" >"$OUTPUT_DIR/duration.csv"
 
 echo -n "  Calculating mean time of travelling"
 
 # Calculate mean time of travelling
-for file in "${FILES_TO_PROCESS[@]}"; do
-    # Loading spinner to improve user expirience
-    printf "\r${sp:i++%${#sp}:1}"
+for FILE in "${FILES_TO_PROCESS[@]}"; do
+  # Loading spinner to improve user expirience
+  printf "\r${sp:i++%${#sp}:1}"
 
-    # Extract the route name from the file path
-    ROUTE_NAME=$(basename "$file" .csv)
+  # Extract the route name from the file path
+  ROUTE_NAME=$(basename "$FILE" .csv)
 
-    # calculate the mean duration from each CSV file with decimal values
-    MEAN_DURATION_SECONDS=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$file")
-    
-    # Remove the decimal part by casting to an integer
-    MEAN_DURATION_SECONDS_INT=${MEAN_DURATION_SECONDS%.*}
+  # calculate the mean duration from each CSV file with decimal values
+  MEAN_DURATION_SECONDS=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$file")
 
-    # Format the mean duration as HOURS:MINUTES:SECONDS, ignoring milliseconds using date
-    formatted_mean_duration=$(date -u -d @$MEAN_DURATION_SECONDS_INT +'%H:%M:%S')
-    
-    # Write the data to the CSV file
-    echo "$ROUTE_NAME,$formatted_mean_duration" >> "$OUTPUT_DIR/duration.csv"
+  # Remove the decimal part by casting to an integer
+  MEAN_DURATION_SECONDS_INT=${MEAN_DURATION_SECONDS%.*}
+
+  # Format the mean duration as HOURS:MINUTES:SECONDS, ignoring milliseconds using date
+  formatted_mean_duration=$(date -u -d @$MEAN_DURATION_SECONDS_INT +'%H:%M:%S')
+
+  # Write the data to the CSV file
+  echo "$ROUTE_NAME,$formatted_mean_duration" >>"$OUTPUT_DIR/duration.csv"
 done
 
 echo -ne "\rFinished calculating mean time of travelling\n"
-
 
 # Create an associative array to store the total fuel for each VEHICLE_ID
 declare -A TOTAL_FUEL
@@ -91,10 +90,10 @@ declare -A TOTAL_FUEL
 echo -n "  Calculating fuel usage"
 
 # Calculating fuel usage
-for file in "${FILES_TO_PROCESS[@]}"; do
+for FILE in "${FILES_TO_PROCESS[@]}"; do
   # Loading spinner to improve user expirience
   printf "\r${sp:i++%${#sp}:1}"
-  if [ -e "$file" ]; then
+  if [ -e "$FILE" ]; then
     # Use a flag to skip the first row (header)
     skip_header=true
 
@@ -105,9 +104,8 @@ for file in "${FILES_TO_PROCESS[@]}"; do
       fi
 
       # Extract the VEHICLE_ID and fuel values
-      VEHICLE_ID="${line[-2]}"  
-      FUEL="${line[-1]}"        
-
+      VEHICLE_ID="${line[-2]}"
+      FUEL="${line[-1]}"
 
       # Check if fuel is a numeric value
       if [[ "$FUEL" =~ ^[0-9]+$ ]]; then
@@ -122,18 +120,18 @@ for file in "${FILES_TO_PROCESS[@]}"; do
       else
         echo "Skipping line with non-numeric fuel value: $FUEL for $VEHICLE_ID"
       fi
-    done < "$file"
+    done <"$FILE"
   else
-    echo "File '$file' does not exist."
+    echo "File '$FILE' does not exist."
   fi
 done
 
 # Create the CSV file to store fuel usage data for every vehicle
-echo "id,fuel" > "$OUTPUT_DIR/engine.csv"  # Header row
+echo "id,fuel" >"$OUTPUT_DIR/engine.csv" # Header row
 
 # Write the total fuel data to the CSV file
 for VEHICLE_ID in "${!TOTAL_FUEL[@]}"; do
-  echo "$VEHICLE_ID,${TOTAL_FUEL[$VEHICLE_ID]}" >> "$OUTPUT_DIR/engine.csv"
+  echo "$VEHICLE_ID,${TOTAL_FUEL[$VEHICLE_ID]}" >>"$OUTPUT_DIR/engine.csv"
 done
 
 echo -ne "\rFinished calculating fuel usage\n"

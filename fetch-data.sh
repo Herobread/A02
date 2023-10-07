@@ -25,8 +25,8 @@ if [ ! -d "$DIRECTORY" ]; then
 fi
 
 cd "$DIRECTORY" || exit 1
-echo "[Info] $(date)" > log.txt
-echo "[Info] Downloading data from $FILE_LIST_URL into $DIRECTORY" >> log.txt
+echo "[Info] $(date)" >log.txt
+echo "[Info] Downloading data from $FILE_LIST_URL into $DIRECTORY" >>log.txt
 
 # Check if filelist.txt already exists
 if [ -f "filelist.txt" ]; then
@@ -54,28 +54,28 @@ fi
 
 # Download the filelist.txt from the FILE_LIST_URL
 if ! wget "$FILE_LIST_URL"; then
-  echo "[Error] Failed to download 'filelist.txt' from '$FILE_LIST_URL'" &>> log.txt
+  echo "[Error] Failed to download 'filelist.txt' from '$FILE_LIST_URL'" &>>log.txt
   exit 1
 fi
 
 # Read the list of files from filelist.txt and download each one
-while IFS= read -r file; do
+while IFS= read -r FILE; do
   # Replace spaces with %20 in the filename
-  encoded_file=$(echo "$file" | sed 's/ /%20/g')
-  
-  # Construct the full URL for the file
-  FULL_FILE_URL="${BASE_URL}${encoded_file}"
+  ENCODED_FILE=$(echo "$FILE" | sed 's/ /%20/g')
 
-  echo "[Info] Downloading file from $FULL_FILE_URL" >> log.txt
+  # Construct the full URL for the file
+  FULL_FILE_URL="${BASE_URL}${ENCODED_FILE}"
+
+  echo "[Info] Downloading file from $FULL_FILE_URL" >>log.txt
   if ! wget "$FULL_FILE_URL" -P data/; then
-    echo "[Error] Failed to download '$file' from '$FULL_FILE_URL'" &>> log.txt
+    echo "[Error] Failed to download '$FILE' from '$FULL_FILE_URL'" &>>log.txt
     continue
   fi
-  echo "[Info] Downloaded file from $FULL_FILE_URL" >> log.txt
+  echo "[Info] Downloaded file from $FULL_FILE_URL" >>log.txt
 
-done < filelist.txt
+done <filelist.txt
 
-echo "[Info] Program finished" >> log.txt
-echo "[Info] $(date)" >> log.txt
+echo "[Info] Program finished" >>log.txt
+echo "[Info] $(date)" >>log.txt
 
 rm -f filelist.txt

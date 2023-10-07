@@ -1,7 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 1 ]
-then
+if [ $# -ne 1 ]; then
   echo "Usage: $0 <dir>" >&2
   exit 1
 fi
