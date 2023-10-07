@@ -53,6 +53,9 @@ output_dir="$data_dir/out"
 mkdir -p "$output_dir"
 echo "Output directory: $output_dir"
 
+# Create the CSV file with headers
+echo "route,duration" > "$output_dir/duration.csv"
+
 for file in "${files_to_process[@]}"; do
     # Extract the route name from the file path
     route_name=$(basename "$file" .csv)
@@ -63,7 +66,6 @@ for file in "${files_to_process[@]}"; do
     # Remove the decimal part by casting to an integer
     mean_duration_seconds_int=${mean_duration_seconds%.*}
 
-
     # Convert the mean duration to HOURS:MINUTES:SECONDS format
     hours=$((mean_duration_seconds_int / 3600))
     minutes=$(( (mean_duration_seconds_int % 3600) / 60 ))
@@ -72,9 +74,13 @@ for file in "${files_to_process[@]}"; do
     # Format the mean duration as HOURS:MINUTES:SECONDS, ignoring milliseconds
     formatted_mean_duration=$(printf "%02d:%02d:%02d" "$hours" "$minutes" "$seconds")
     
-    # Print the result
+    # Write the data to the CSV file
+    echo "$route_name,$formatted_mean_duration" >> "$output_dir/duration.csv"
+    
+    # Print the result (optional)
     echo "Mean duration for route '$route_name': $formatted_mean_duration"
 done
+
 
 # Print completion message
 # echo "Processing complete. Results are stored in $output_dir/duration.csv and $output_dir/engine.csv."
