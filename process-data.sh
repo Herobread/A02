@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Initialize variables
-data_dir=""
-use_testing_set=false
+DATA_DIR=""
+USE_TESTING_SET=false
 
 # for loading spinner
 i=1
@@ -12,7 +12,7 @@ sp="/-\|"
 while getopts ":t" opt; do
   case $opt in
     t)
-      use_testing_set=true
+      USE_TESTING_SET=true
       echo "Using testing set."
       ;;
     \?)
@@ -31,67 +31,67 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
-data_dir="$1"
-echo "Data directory: $data_dir"
+DATA_DIR="$1"
+echo "Data directory: $DATA_DIR"
 
 # Check if the directory exists
-if [ ! -d "$data_dir" ]; then
-  echo "Error: Directory '$data_dir' does not exist."
+if [ ! -d "$DATA_DIR" ]; then
+  echo "Error: Directory '$DATA_DIR' does not exist."
   exit 1
 fi
 
 # Determine the list of files to process based on the -t flag
-if [ "$use_testing_set" = true ]; then
+if [ "$USE_TESTING_SET" = true ]; then
   # Use filter.sh output and prepend the data directory path
   echo "Using testing set files."
-  files_to_process=($(./filter.sh "$data_dir" | sed 's/^/'"$data_dir"'\/data\//'))
+  FILES_TO_PROCESS=($(./filter.sh "$DATA_DIR" | sed 's/^/'"$DATA_DIR"'\/data\//'))
 else
   # Use all .csv files in the data/ directory
   echo "Using all .csv files in the data/ directory."
-  files_to_process=("$data_dir"/data/*.csv)
+  FILES_TO_PROCESS=("$DATA_DIR"/data/*.csv)
 fi
 
 # Create the output directory if it doesn't exist
-output_dir="$data_dir/out"
-mkdir -p "$output_dir"
-echo "Output directory: $output_dir"
+OUTPUT_DIR="$DATA_DIR/out"
+mkdir -p "$OUTPUT_DIR"
+echo "Output directory: $OUTPUT_DIR"
 
 # Create the CSV file with headers
-echo "route,duration" > "$output_dir/duration.csv"
+echo "route,duration" > "$OUTPUT_DIR/duration.csv"
 
 echo -n "  Calculating mean time of travelling"
 
 # Calculate mean time of travelling
-for file in "${files_to_process[@]}"; do
+for file in "${FILES_TO_PROCESS[@]}"; do
     # Loading spinner to improve user expirience
     printf "\r${sp:i++%${#sp}:1}"
 
     # Extract the route name from the file path
-    route_name=$(basename "$file" .csv)
+    ROUTE_NAME=$(basename "$file" .csv)
 
     # calculate the mean duration from each CSV file with decimal values
-    mean_duration_seconds=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$file")
+    MEAN_DURATION_SECONDS=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$file")
     
     # Remove the decimal part by casting to an integer
-    mean_duration_seconds_int=${mean_duration_seconds%.*}
+    MEAN_DURATION_SECONDS_INT=${MEAN_DURATION_SECONDS%.*}
 
     # Format the mean duration as HOURS:MINUTES:SECONDS, ignoring milliseconds using date
-    formatted_mean_duration=$(date -u -d @$mean_duration_seconds_int +'%H:%M:%S')
+    formatted_mean_duration=$(date -u -d @$MEAN_DURATION_SECONDS_INT +'%H:%M:%S')
     
     # Write the data to the CSV file
-    echo "$route_name,$formatted_mean_duration" >> "$output_dir/duration.csv"
+    echo "$ROUTE_NAME,$formatted_mean_duration" >> "$OUTPUT_DIR/duration.csv"
 done
 
 echo -ne "\rFinished calculating mean time of travelling\n"
 
 
-# Create an associative array to store the total fuel for each vehicle_id
-declare -A total_fuel
+# Create an associative array to store the total fuel for each VEHICLE_ID
+declare -A TOTAL_FUEL
 
 echo -n "  Calculating fuel usage"
 
 # Calculating fuel usage
-for file in "${files_to_process[@]}"; do
+for file in "${FILES_TO_PROCESS[@]}"; do
   # Loading spinner to improve user expirience
   printf "\r${sp:i++%${#sp}:1}"
   if [ -e "$file" ]; then
@@ -104,23 +104,23 @@ for file in "${files_to_process[@]}"; do
         continue
       fi
 
-      # Extract the vehicle_id and fuel values
-      vehicle_id="${line[-2]}"  
-      fuel="${line[-1]}"        
+      # Extract the VEHICLE_ID and fuel values
+      VEHICLE_ID="${line[-2]}"  
+      FUEL="${line[-1]}"        
 
 
       # Check if fuel is a numeric value
-      if [[ "$fuel" =~ ^[0-9]+$ ]]; then
-        # Check if the vehicle_id is already in the associative array
-        if [ -n "${total_fuel[$vehicle_id]}" ]; then
+      if [[ "$FUEL" =~ ^[0-9]+$ ]]; then
+        # Check if the VEHICLE_ID is already in the associative array
+        if [ -n "${TOTAL_FUEL[$VEHICLE_ID]}" ]; then
           # Add the fuel value to the total
-          total_fuel["$vehicle_id"]=$((total_fuel["$vehicle_id"] + fuel))
+          TOTAL_FUEL["$VEHICLE_ID"]=$((TOTAL_FUEL["$VEHICLE_ID"] + FUEL))
         else
-          # Initialize the total fuel for this vehicle_id
-          total_fuel["$vehicle_id"]=$fuel
+          # Initialize the total fuel for this VEHICLE_ID
+          TOTAL_FUEL["$VEHICLE_ID"]=$FUEL
         fi
       else
-        echo "Skipping line with non-numeric fuel value: $fuel for $vehicle_id"
+        echo "Skipping line with non-numeric fuel value: $FUEL for $VEHICLE_ID"
       fi
     done < "$file"
   else
@@ -129,13 +129,13 @@ for file in "${files_to_process[@]}"; do
 done
 
 # Create the CSV file to store fuel usage data for every vehicle
-echo "id,fuel" > "$output_dir/engine.csv"  # Header row
+echo "id,fuel" > "$OUTPUT_DIR/engine.csv"  # Header row
 
 # Write the total fuel data to the CSV file
-for vehicle_id in "${!total_fuel[@]}"; do
-  echo "$vehicle_id,${total_fuel[$vehicle_id]}" >> "$output_dir/engine.csv"
+for VEHICLE_ID in "${!TOTAL_FUEL[@]}"; do
+  echo "$VEHICLE_ID,${TOTAL_FUEL[$VEHICLE_ID]}" >> "$OUTPUT_DIR/engine.csv"
 done
 
 echo -ne "\rFinished calculating fuel usage\n"
 
-echo "Data has been written to '$output_dir/engine.csv' and '$output_dir/duration.csv'."
+echo "Data has been written to '$OUTPUT_DIR/engine.csv' and '$OUTPUT_DIR/duration.csv'."
