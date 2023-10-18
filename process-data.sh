@@ -70,16 +70,16 @@ for FILE in "${FILES_TO_PROCESS[@]}"; do
   ROUTE_NAME=$(basename "$FILE" .csv)
 
   # calculate the mean duration from each CSV file with decimal values
-  MEAN_DURATION_SECONDS=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$file")
+  MEAN_DURATION_SECONDS=$(awk -F ',' 'NR > 1 {sum += $(NF-2) - $1; count++} END {if (count > 0) printf "%.1f", sum / count}' "$FILE")
 
   # Remove the decimal part by casting to an integer
   MEAN_DURATION_SECONDS_INT=${MEAN_DURATION_SECONDS%.*}
 
   # Format the mean duration as HOURS:MINUTES:SECONDS, ignoring milliseconds using date
-  formatted_mean_duration=$(date -u -d @$MEAN_DURATION_SECONDS_INT +'%H:%M:%S')
+  FORMATTED_MEAN_DURATION=$(date -u -d @$MEAN_DURATION_SECONDS_INT +'%H:%M:%S')
 
   # Write the data to the CSV file
-  echo "$ROUTE_NAME,$formatted_mean_duration" >>"$OUTPUT_DIR/duration.csv"
+  echo "$ROUTE_NAME,$FORMATTED_MEAN_DURATION" >>"$OUTPUT_DIR/duration.csv"
 done
 
 echo -ne "\rFinished calculating mean time of travelling\n"
@@ -93,6 +93,7 @@ echo -n "  Calculating fuel usage"
 for FILE in "${FILES_TO_PROCESS[@]}"; do
   # Loading spinner to improve user expirience
   printf "\r${sp:i++%${#sp}:1}"
+
   if [ -e "$FILE" ]; then
     # Use a flag to skip the first row (header)
     skip_header=true
